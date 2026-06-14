@@ -44,12 +44,12 @@ public class DivineCube : MonoBehaviour
 
     void Update()
     {
-        // E — Pickup when player nearby and cube is not held
+        // E — Pickup when player nearby and cube not held
         if (playerNearby && !isHeld)
         {
             if (isPlaced && isBlessedCube)
             {
-                // Blessed cube locked — do nothing
+                // Blessed cube locked
             }
             else if (Input.GetKeyDown(KeyCode.E))
             {
@@ -62,6 +62,10 @@ public class DivineCube : MonoBehaviour
             // Lock to holdPoint every frame
             transform.position = holdPoint.position;
             transform.rotation = holdPoint.rotation;
+
+            // Make sure holdText stays visible while held
+            if (holdText != null && !holdText.activeSelf)
+                holdText.SetActive(true);
 
             // G — Drop
             if (Input.GetKeyDown(KeyCode.G))
@@ -86,7 +90,7 @@ public class DivineCube : MonoBehaviour
 
         isHeld = true;
         isPlaced = false;
-        playerNearby = false;
+        playerNearby = false; // Will trigger OnTriggerExit but we handle below
 
         if (rb != null)
         {
@@ -103,7 +107,7 @@ public class DivineCube : MonoBehaviour
         transform.localPosition = Vector3.zero;
         transform.localRotation = Quaternion.identity;
 
-        // Hide pickup text, show hold text
+        // Show holdText — AFTER parenting so OnTriggerExit doesnt hide it
         if (pickupText != null) pickupText.SetActive(false);
         if (holdText != null) holdText.SetActive(true);
 
@@ -127,7 +131,7 @@ public class DivineCube : MonoBehaviour
             rb.isKinematic = false;
         }
 
-        // Hide hold text, show pickup text again
+        // Hide hold text show pickup text
         if (holdText != null) holdText.SetActive(false);
         if (pickupText != null) pickupText.SetActive(true);
 
@@ -178,7 +182,6 @@ public class DivineCube : MonoBehaviour
 
             nearest.TrySolve(this, gameObject);
 
-            // Hide all text after placing
             HideAllText();
 
             Debug.Log("Placed: " + gameObject.name);
@@ -233,8 +236,16 @@ public class DivineCube : MonoBehaviour
         {
             playerNearby = false;
 
-            // Hide ALL text when player walks away
-            HideAllText();
+            // Only hide text if cube is NOT held
+            if (!isHeld)
+                HideAllText();
+
+            // If held keep holdText visible
+            if (isHeld)
+            {
+                if (pickupText != null) pickupText.SetActive(false);
+                if (holdText != null) holdText.SetActive(true);
+            }
         }
     }
 }
