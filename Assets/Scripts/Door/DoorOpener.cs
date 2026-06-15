@@ -3,11 +3,16 @@ using UnityEngine;
 
 public class DoorOpener : MonoBehaviour
 {
+    [Header("Doors")]
     public Transform leftDoor;
     public Transform rightDoor;
 
     public float moveDistance = 5f;
     public float moveSpeed = 2f;
+
+    [Header("Sound")]
+    public AudioSource audioSource;
+    public AudioClip doorOpenSound;
 
     bool opened = false;
 
@@ -16,6 +21,13 @@ public class DoorOpener : MonoBehaviour
         if (opened) return;
 
         opened = true;
+
+        // Play door sound
+        if (audioSource != null && doorOpenSound != null)
+        {
+            audioSource.PlayOneShot(doorOpenSound);
+        }
+
         StartCoroutine(OpenRoutine());
     }
 
@@ -27,9 +39,9 @@ public class DoorOpener : MonoBehaviour
         Vector3 leftTarget = leftStart + Vector3.left * moveDistance;
         Vector3 rightTarget = rightStart + Vector3.right * moveDistance;
 
-        float t = 0;
+        float t = 0f;
 
-        while (t < 1)
+        while (t < 1f)
         {
             t += Time.deltaTime * moveSpeed;
 

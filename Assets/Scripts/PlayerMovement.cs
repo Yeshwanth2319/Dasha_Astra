@@ -20,6 +20,13 @@ public class PlayerMovement : MonoBehaviour
     private float verticalVelocity = 0f;
     private bool isGrounded;
 
+    [Header("Audio")]
+    public AudioSource audioSource;
+    public AudioClip footstepSound;
+    public AudioClip jumpSound;
+
+    private bool footstepPlaying = false;
+
     void Start()
     {
         controller = GetComponent<CharacterController>();
@@ -62,14 +69,36 @@ public class PlayerMovement : MonoBehaviour
 
         controller.Move(finalMove * Time.deltaTime);
 
-        // In TPP rotate player toward movement direction
-        // In FPP player body already rotates with camera yaw
         bool isFirstPerson = thirdPersonCamera != null && thirdPersonCamera.IsFirstPerson();
 
         if (!isFirstPerson && move.magnitude > 0.1f)
         {
             Quaternion targetRotation = Quaternion.LookRotation(move);
-            transform.rotation = Quaternion.Lerp(transform.rotation, targetRotation, Time.deltaTime * rotationSpeed);
+            transform.rotation = Quaternion.Lerp(
+                transform.rotation,
+                targetRotation,
+                Time.deltaTime * rotationSpeed
+            );
+        }
+
+        // Footstep Sound
+        bool isMoving = move.magnitude > 0.1f && isGrounded;
+
+        if (isMoving)
+        {
+            if (!audioSource.isPlaying)
+            {
+                audioSource.clip = footstepSound;
+                audioSource.loop = true;
+                audioSource.Play();
+            }
+        }
+        else
+        {
+            if (audioSource.isPlaying && audioSource.clip == footstepSound)
+            {
+                audioSource.Stop();
+            }
         }
 
         // Animator
@@ -96,6 +125,11 @@ public class PlayerMovement : MonoBehaviour
 
                 if (animator != null)
                     animator.SetTrigger("Jump");
+
+                if (audioSource != null && jumpSound != null)
+                {
+                    audioSource.PlayOneShot(jumpSound);
+                }
             }
         }
         else

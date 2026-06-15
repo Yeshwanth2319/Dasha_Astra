@@ -4,7 +4,8 @@ using System.Collections;
 public class MatsyaStone : MonoBehaviour
 {
     public GameObject pressEText;
-    public GameObject unlockText;
+    public GameObject unlockText_1;
+    public GameObject unlockText_2;
 
     bool playerNear = false;
     bool collected = false;
@@ -43,12 +44,14 @@ public class MatsyaStone : MonoBehaviour
 
         pressEText.SetActive(false);
 
-        unlockText.SetActive(true);
+        unlockText_1.SetActive(true);
+        unlockText_2.SetActive(false);
 
         gameObject.SetActive(false);
 
         yield return new WaitForSeconds(5f);
 
-        unlockText.SetActive(false);
+        unlockText_1.SetActive(false);
+        unlockText_2.SetActive(false);
     }
 }

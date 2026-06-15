@@ -13,6 +13,10 @@ public class TurtleRotator : MonoBehaviour
     public float growthMultiplier = 1.5f;
     public float growthDuration = 1f;
 
+    [Header("Wall Sound")]
+    public AudioSource wallAudio;
+    public AudioClip wallDownSound;
+
     private void Awake()
     {
         rends = GetComponentsInChildren<Renderer>();
@@ -21,6 +25,7 @@ public class TurtleRotator : MonoBehaviour
     public void RotateTurtle()
     {
         transform.Rotate(0f, 90f, 0f);
+        wallAudio.PlayOneShot(wallDownSound);
     }
 
     public void EnableGlow()
