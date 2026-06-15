@@ -86,6 +86,14 @@ public class PuzzleTrigger : MonoBehaviour
         puzzleOpen = true;
         puzzleBoard.SetActive(true);
 
+        // Stop player movement completely
+        Rigidbody rb = GameObject.FindGameObjectWithTag("Player").GetComponent<Rigidbody>();
+        if (rb != null)
+        {
+            rb.linearVelocity = Vector3.zero; // Use velocity = Vector3.zero if older Unity
+            rb.angularVelocity = Vector3.zero;
+        }
+
         if (playerMovement != null)
             playerMovement.enabled = false;
 
