@@ -86,17 +86,17 @@ public class PuzzleTrigger : MonoBehaviour
         puzzleOpen = true;
         puzzleBoard.SetActive(true);
 
-        playerMovement.enabled = false;
+        if (playerMovement != null)
+            playerMovement.enabled = false;
+
+        if (thirdPersonCamera != null)
+            thirdPersonCamera.enabled = false;
 
         playerCamera.enabled = false;
         puzzleCamera.enabled = true;
 
-        // Hide Press E text when puzzle opens
         if (pressEText != null)
             pressEText.gameObject.SetActive(false);
-
-        if (thirdPersonCamera != null)
-            thirdPersonCamera.UnlockCursor();
 
         Cursor.lockState = CursorLockMode.None;
         Cursor.visible = true;
@@ -109,21 +109,19 @@ public class PuzzleTrigger : MonoBehaviour
         puzzleOpen = false;
         puzzleBoard.SetActive(false);
 
-        playerMovement.enabled = true;
+        if (playerMovement != null)
+            playerMovement.enabled = true;
+
+        if (thirdPersonCamera != null)
+            thirdPersonCamera.enabled = true;
 
         playerCamera.enabled = true;
         puzzleCamera.enabled = false;
 
-        if (thirdPersonCamera != null)
-            thirdPersonCamera.LockCursor();
-
         Cursor.lockState = CursorLockMode.Locked;
         Cursor.visible = false;
 
-        // Show Press E text again if player still inside trigger
         if (playerInside && pressEText != null)
             pressEText.gameObject.SetActive(true);
-
-        GameProgress.Instance.puzzle1Solved = true;
     }
 }

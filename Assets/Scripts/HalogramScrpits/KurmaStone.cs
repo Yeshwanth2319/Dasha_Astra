@@ -1,7 +1,7 @@
 using UnityEngine;
 using System.Collections;
 
-public class MatsyaStone : MonoBehaviour
+public class KurmaStone : MonoBehaviour
 {
     public GameObject pressEText;
     public GameObject unlockText;
@@ -45,13 +45,13 @@ public class MatsyaStone : MonoBehaviour
 
         unlockText.SetActive(true);
 
-        // Wait for 3 seconds
+        // Wait 3 seconds
         yield return new WaitForSeconds(3f);
 
-        // Hide unlock text
+        // Hide completed text
         unlockText.SetActive(false);
 
-        // Disable the stone
+        // Now remove the stone
         gameObject.SetActive(false);
     }
 }

@@ -137,4 +137,11 @@ public class PlayerMovement : MonoBehaviour
             verticalVelocity += gravity * Time.deltaTime;
         }
     }
+    void OnDisable()
+    {
+        if (animator != null)
+            animator.SetFloat("Speed", 0);
+
+        enabled = false;
+    }
 }
