@@ -43,12 +43,12 @@ public class MatsyaStone : MonoBehaviour
 
         pressEText.SetActive(false);
 
+        // Show unlock text
         unlockText.SetActive(true);
 
-        // Wait for 3 seconds
+        // Keep it visible for 3 seconds
         yield return new WaitForSeconds(3f);
 
-        // Hide unlock text
         unlockText.SetActive(false);
 
         // Disable the stone

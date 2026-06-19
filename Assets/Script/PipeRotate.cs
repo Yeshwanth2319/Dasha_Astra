@@ -13,18 +13,14 @@ public class PipeRotate : MonoBehaviour
         audioSource.playOnAwake = false;
     }
 
-    void PlaySound(AudioClip clip)
-    {
-        if (clip != null && audioSource != null)
-            audioSource.PlayOneShot(clip);
-    }
-
     void OnMouseOver()
     {
-        if (Input.GetMouseButtonDown(1)) // Right Mouse Button
+        if (Input.GetMouseButtonDown(1))
         {
             transform.Rotate(0f, 0f, 90f);
-            PlaySound(rotateSound); // Play rotate sound
+
+            if (rotateSound != null && audioSource != null)
+                audioSource.PlayOneShot(rotateSound);
         }
     }
 }

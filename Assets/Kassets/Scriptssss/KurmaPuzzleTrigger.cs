@@ -12,7 +12,9 @@ public class KurmaPuzzleTrigger : MonoBehaviour
         if (other.CompareTag("Player"))
         {
             playerInside = true;
-            interactText.SetActive(true);
+
+            if (!puzzleManager.puzzleSolved)
+                interactText.SetActive(true);
         }
     }
 
@@ -27,6 +29,12 @@ public class KurmaPuzzleTrigger : MonoBehaviour
 
     private void Update()
     {
+        if (puzzleManager.puzzleSolved)
+        {
+            interactText.SetActive(false);
+            return;
+        }
+
         if (playerInside && Input.GetKeyDown(KeyCode.E))
         {
             interactText.SetActive(false);

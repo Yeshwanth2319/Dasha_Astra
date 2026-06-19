@@ -6,6 +6,8 @@ public class PuzzleBox : MonoBehaviour
 
     public MatchPuzzleManager manager;
 
+    public GameObject Etext;
+
     bool playerNear = false;
 
     private void Update()
@@ -21,6 +23,7 @@ public class PuzzleBox : MonoBehaviour
         if (other.CompareTag("Player"))
         {
             playerNear = true;
+            Etext.SetActive(true);
         }
     }
 
@@ -29,6 +32,7 @@ public class PuzzleBox : MonoBehaviour
         if (other.CompareTag("Player"))
         {
             playerNear = false;
+            Etext.SetActive(false);
         }
     }
 }

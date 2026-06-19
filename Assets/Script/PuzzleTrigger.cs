@@ -3,27 +3,31 @@ using TMPro;
 
 public class PuzzleTrigger : MonoBehaviour
 {
-    public GameObject puzzleBoard;
+    [Header("Cameras")]
     public Camera playerCamera;
     public Camera puzzleCamera;
 
+    [Header("Player")]
     public MonoBehaviour playerMovement;
     public ThirdPersonCamera thirdPersonCamera;
 
-    public TextMeshProUGUI pressEText; // Assign in Inspector
+    [Header("UI")]
+    public TextMeshProUGUI pressEText;
 
+    [Header("Pipe detection")]
+    public LayerMask pipeLayerMask;
     private bool playerInside = false;
     private bool puzzleOpen = false;
-
+    PipeDrag pipeDrag;
     void Start()
     {
-        puzzleBoard.SetActive(false);
         puzzleCamera.enabled = false;
         playerCamera.enabled = true;
 
         if (pressEText != null)
             pressEText.gameObject.SetActive(false);
 
+        // Assign puzzle camera to all pipes in the scene
         AssignCameraToPipes();
     }
 
@@ -32,12 +36,8 @@ public class PuzzleTrigger : MonoBehaviour
         if (other.CompareTag("Player"))
         {
             playerInside = true;
-
-            // Show Press E text
             if (pressEText != null)
                 pressEText.gameObject.SetActive(true);
-
-            Debug.Log("Player entered. Press E to open puzzle.");
         }
     }
 
@@ -46,59 +46,57 @@ public class PuzzleTrigger : MonoBehaviour
         if (other.CompareTag("Player"))
         {
             playerInside = false;
-
-            // Hide Press E text
             if (pressEText != null)
                 pressEText.gameObject.SetActive(false);
+
+            if (puzzleOpen)
+                ClosePuzzle();
         }
     }
 
     void Update()
     {
         if (playerInside && !puzzleOpen && Input.GetKeyDown(KeyCode.E))
-        {
             OpenPuzzle();
-        }
 
-        if (puzzleOpen && Input.GetKeyDown(KeyCode.Escape))
+        Ray ray = puzzleCamera.ScreenPointToRay(Input.mousePosition);
+
+        if (Physics.Raycast(ray, out RaycastHit hit, Mathf.Infinity, pipeLayerMask))
         {
-            ClosePuzzle();
+            if (pipeDrag==null)
+            {
+                pipeDrag = hit.transform.GetComponent<PipeDrag>();
+                pipeDrag.isSelected = true;
+            }
+           
+            
         }
+        else
+        {
+            if (pipeDrag != null)
+            {
+                pipeDrag.isSelected = false;
+                pipeDrag = null;
+            }
+        }
+        
     }
 
     void AssignCameraToPipes()
     {
-        if (puzzleBoard == null || puzzleCamera == null) return;
-
-        // true = include inactive children
-        PipeDrag[] pipes = puzzleBoard.GetComponentsInChildren<PipeDrag>(true);
-
+        // Find ALL pipes in the scene since there's no puzzle board parent
+        PipeDrag[] pipes = FindObjectsOfType<PipeDrag>();
         Debug.Log($"Found {pipes.Length} pipes.");
-
         foreach (PipeDrag pipe in pipes)
-        {
             pipe.SetCamera(puzzleCamera);
-        }
     }
 
     void OpenPuzzle()
     {
         puzzleOpen = true;
-        puzzleBoard.SetActive(true);
 
-        // Stop player movement completely
-        Rigidbody rb = GameObject.FindGameObjectWithTag("Player").GetComponent<Rigidbody>();
-        if (rb != null)
-        {
-            rb.linearVelocity = Vector3.zero; // Use velocity = Vector3.zero if older Unity
-            rb.angularVelocity = Vector3.zero;
-        }
-
-        if (playerMovement != null)
-            playerMovement.enabled = false;
-
-        if (thirdPersonCamera != null)
-            thirdPersonCamera.enabled = false;
+        if (playerMovement != null) playerMovement.enabled = false;
+        if (thirdPersonCamera != null) thirdPersonCamera.enabled = false;
 
         playerCamera.enabled = false;
         puzzleCamera.enabled = true;
@@ -108,20 +106,14 @@ public class PuzzleTrigger : MonoBehaviour
 
         Cursor.lockState = CursorLockMode.None;
         Cursor.visible = true;
-
-        AssignCameraToPipes();
     }
 
     void ClosePuzzle()
     {
         puzzleOpen = false;
-        puzzleBoard.SetActive(false);
 
-        if (playerMovement != null)
-            playerMovement.enabled = true;
-
-        if (thirdPersonCamera != null)
-            thirdPersonCamera.enabled = true;
+        if (playerMovement != null) playerMovement.enabled = true;
+        if (thirdPersonCamera != null) thirdPersonCamera.enabled = true;
 
         playerCamera.enabled = true;
         puzzleCamera.enabled = false;

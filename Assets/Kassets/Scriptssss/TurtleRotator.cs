@@ -25,22 +25,46 @@ public class TurtleRotator : MonoBehaviour
     public void RotateTurtle()
     {
         transform.Rotate(0f, 90f, 0f);
-        wallAudio.PlayOneShot(wallDownSound);
+
+        if (wallAudio != null && wallDownSound != null)
+            wallAudio.PlayOneShot(wallDownSound);
     }
 
     public void EnableGlow()
     {
         foreach (Renderer r in rends)
         {
-            Material mat = r.material;
+            // Loop all materials on each renderer
+            Material[] mats = r.materials; // Instance materials for build
 
-            mat.EnableKeyword("_EMISSION");
-
-            mat.SetColor(
-                "_EmissionColor",
-                glowColor * glowIntensity
-            );
+            foreach (Material mat in mats)
+            {
+                mat.EnableKeyword("_EMISSION");
+                mat.SetColor(
+                    "_EmissionColor",
+                    glowColor * glowIntensity
+                );
+            }
         }
+
+        // Force update emission in build
+        DynamicGI.UpdateEnvironment();
+    }
+
+    public void DisableGlow()
+    {
+        foreach (Renderer r in rends)
+        {
+            Material[] mats = r.materials;
+
+            foreach (Material mat in mats)
+            {
+                mat.DisableKeyword("_EMISSION");
+                mat.SetColor("_EmissionColor", Color.black);
+            }
+        }
+
+        DynamicGI.UpdateEnvironment();
     }
 
     public IEnumerator Grow()

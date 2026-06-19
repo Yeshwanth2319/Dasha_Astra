@@ -57,6 +57,22 @@ public class WaterSlot : MonoBehaviour
         }
     }
 
+    void SetEmission(GameObject obj, Color emissionColor)
+    {
+        Renderer rend = obj.GetComponent<Renderer>();
+        if (rend == null) return;
+
+        // Loop all materials on the object
+        Material[] mats = rend.materials;
+
+        foreach (Material mat in mats)
+        {
+            mat.EnableKeyword("_EMISSION");
+            mat.SetColor("_EmissionColor", emissionColor);
+        }
+
+        DynamicGI.UpdateEnvironment();
+    }
     // Called when normal cube is removed from slot
     public void FreeSlot()
     {

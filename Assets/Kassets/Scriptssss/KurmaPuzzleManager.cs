@@ -1,15 +1,12 @@
-using UnityEngine;
-using TMPro;
 using System.Collections;
+using UnityEngine;
 
 public class KurmaPuzzleManager : MonoBehaviour
 {
     [Header("Puzzle")]
     public TurtleRotator[] turtles;
-
     public GameObject puzzleText;
     public GameObject completedText;
-
     public Transform centerPoint;
 
     [Header("Door")]
@@ -25,24 +22,29 @@ public class KurmaPuzzleManager : MonoBehaviour
     public float growScale = 2f;
     public float growSpeed = 2f;
 
-    int currentSelection = 0;
+    [Header("Highlight Settings")]
+    public Color selectedColor = new Color(1f, 0.95f, 0.75f, 1f);
+    [Range(0f, 1f)] public float opacity = 1f;
 
+    [Header("State")]
+    public bool puzzleSolved = false;
+
+    int currentSelection = 0;
     bool puzzleMode = false;
-    bool puzzleSolved = false;
 
     Vector3 doorTarget;
 
-    private void Start()
+    void Start()
     {
-        // Door will move DOWN when puzzle is solved
         doorTarget = door.position + Vector3.down * doorLowerHeight;
     }
 
     public void EnterPuzzle()
     {
+        if (puzzleSolved) return;
+
         puzzleMode = true;
         puzzleText.SetActive(true);
-
         HighlightSelected();
     }
 
@@ -51,26 +53,18 @@ public class KurmaPuzzleManager : MonoBehaviour
         if (!puzzleMode || puzzleSolved)
             return;
 
-        // Select next turtle
         if (Input.GetKeyDown(KeyCode.F))
         {
-            currentSelection++;
-
-            if (currentSelection >= turtles.Length)
-                currentSelection = 0;
-
+            currentSelection = (currentSelection + 1) % turtles.Length;
             HighlightSelected();
         }
 
-        // Rotate selected turtle
         if (Input.GetKeyDown(KeyCode.R))
         {
             turtles[currentSelection].RotateTurtle();
-
             CheckPuzzle();
         }
 
-        // Exit puzzle
         if (Input.GetKeyDown(KeyCode.Escape))
         {
             ExitPuzzle();
@@ -81,15 +75,13 @@ public class KurmaPuzzleManager : MonoBehaviour
     {
         for (int i = 0; i < turtles.Length; i++)
         {
-            Renderer[] renderers =
-                turtles[i].GetComponentsInChildren<Renderer>();
+            Renderer[] renderers = turtles[i].GetComponentsInChildren<Renderer>();
 
             foreach (Renderer r in renderers)
             {
-                if (i == currentSelection)
-                    r.material.color = new Color(1f, 0.95f, 0.75f);
-                else
-                    r.material.color = Color.white;
+                Color c = (i == currentSelection) ? selectedColor : Color.white;
+                c.a = opacity;
+                r.material.color = c;
             }
         }
     }
@@ -100,13 +92,16 @@ public class KurmaPuzzleManager : MonoBehaviour
 
         foreach (TurtleRotator turtle in turtles)
         {
-            Vector3 directionToCenter =
-                (centerPoint.position - turtle.transform.position).normalized;
+            Vector3 dir = centerPoint.position - turtle.transform.position;
+            dir.y = 0; // ignore height
 
-            float angle =
-                Vector3.Angle(turtle.transform.forward, directionToCenter);
+            Vector3 forward = turtle.transform.forward;
+            forward.y = 0;
 
-            if (angle > 20f)
+            float dot = Vector3.Dot(forward.normalized, dir.normalized);
+
+            // more stable than angle
+            if (dot < 0.7f)   // adjust sensitivity
             {
                 allCorrect = false;
                 break;
@@ -115,6 +110,7 @@ public class KurmaPuzzleManager : MonoBehaviour
 
         if (allCorrect)
         {
+            Debug.Log("PUZZLE SOLVED!");
             PuzzleComplete();
         }
     }
@@ -122,8 +118,12 @@ public class KurmaPuzzleManager : MonoBehaviour
     void PuzzleComplete()
     {
         puzzleSolved = true;
+        puzzleMode = false;
 
         puzzleText.SetActive(false);
+
+        if (completedText != null)
+            StartCoroutine(ShowCompleted());
 
         foreach (TurtleRotator turtle in turtles)
         {
@@ -131,27 +131,21 @@ public class KurmaPuzzleManager : MonoBehaviour
             StartCoroutine(turtle.Grow());
         }
 
-        IEnumerator ShowCompletedText()
-        {
-            completedText.SetActive(true);
-
-            yield return new WaitForSeconds(3f);
-
-            completedText.SetActive(false);
-        }
-
         StartCoroutine(OpenDoor());
+    }
+
+    IEnumerator ShowCompleted()
+    {
+        completedText.SetActive(true);
+        yield return new WaitForSeconds(3f);
+        completedText.SetActive(false);
     }
 
     IEnumerator OpenDoor()
     {
-        // Play door sound
         if (doorAudio != null && doorOpenSound != null)
-        {
             doorAudio.PlayOneShot(doorOpenSound);
-        }
 
-        // Move door downward slowly
         while (Vector3.Distance(door.position, doorTarget) > 0.05f)
         {
             door.position = Vector3.MoveTowards(
@@ -164,44 +158,11 @@ public class KurmaPuzzleManager : MonoBehaviour
         }
     }
 
-    IEnumerator GrowTurtles()
-    {
-        Vector3[] targetScales = new Vector3[turtles.Length];
-
-        for (int i = 0; i < turtles.Length; i++)
-        {
-            targetScales[i] = turtles[i].transform.localScale * growScale;
-        }
-
-        bool growing = true;
-
-        while (growing)
-        {
-            growing = false;
-
-            for (int i = 0; i < turtles.Length; i++)
-            {
-                turtles[i].transform.localScale =
-                    Vector3.Lerp(
-                        turtles[i].transform.localScale,
-                        targetScales[i],
-                        growSpeed * Time.deltaTime);
-
-                if (Vector3.Distance(
-                    turtles[i].transform.localScale,
-                    targetScales[i]) > 0.01f)
-                {
-                    growing = true;
-                }
-            }
-
-            yield return null;
-        }
-    }
-
     public void ExitPuzzle()
     {
         puzzleMode = false;
-        puzzleText.SetActive(false);
+
+        if (puzzleText != null)
+            puzzleText.SetActive(false);
     }
 }

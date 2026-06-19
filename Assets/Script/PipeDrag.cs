@@ -1,117 +1,121 @@
+using NUnit.Framework;
 using UnityEngine;
 
 public class PipeDrag : MonoBehaviour
 {
-    private bool dragging = false;
-    private float distance;
-
+    private Camera puzzleCamera;
+    private bool isDragging = false;
     private bool isPlaced = false;
-    private Slot currentSlot;
+    public bool isSelected = false;
 
+    private Slot currentSlot;
     private PuzzleManager puzzleManager;
-    private bool isSelected = false;
-    private Camera mainCamera;
+    private float dragHeight;
 
     [Header("Sound Effects")]
     public AudioClip pickupSound;
     public AudioClip placeSound;
     public AudioClip removeSound;
-    public AudioClip errorSound; // plays when pipe dropped on invalid slot
+    public AudioClip errorSound;
 
     private AudioSource audioSource;
 
     void Start()
     {
         puzzleManager = FindObjectOfType<PuzzleManager>();
-        mainCamera = Camera.main;
 
-        // Add AudioSource automatically
         audioSource = gameObject.AddComponent<AudioSource>();
         audioSource.playOnAwake = false;
+
+        dragHeight = transform.position.y;
     }
 
     public void SetCamera(Camera cam)
     {
-        mainCamera = cam;
+        puzzleCamera = cam;
     }
 
     void PlaySound(AudioClip clip)
     {
-        if (clip != null && audioSource != null)
+        if (clip != null)
             audioSource.PlayOneShot(clip);
     }
 
     void OnMouseDown()
     {
-        if (mainCamera == null) return;
+        if (puzzleCamera == null)
+            return;
+
+        isSelected = true;
 
         if (!isPlaced)
         {
-            distance = mainCamera.WorldToScreenPoint(transform.position).z;
-            dragging = true;
-            isSelected = true;
+            isDragging = true;
+            dragHeight = transform.position.y;
 
-            PlaySound(pickupSound); // Play pickup sound
-        }
-        else
-        {
-            isSelected = true;
+            PlaySound(pickupSound);
         }
     }
 
     void OnMouseUp()
     {
-        if (!isPlaced)
-        {
-            dragging = false;
-            bool placed = TryPlacePipe(transform.position);
+        if (!isDragging)
+            return;
 
-            if (!placed)
-                PlaySound(errorSound); // Play error if not placed on valid slot
+        isDragging = false;
+
+        if (!TryPlacePipe())
+        {
+            PlaySound(errorSound);
         }
     }
 
     void Update()
     {
-        if (mainCamera == null) return;
+        if (puzzleCamera == null)
+            return;
 
-        // Dragging
-        if (dragging)
+        // Drag pipe
+        if (isDragging)
         {
-            Vector3 mousePos = Input.mousePosition;
-            mousePos.z = distance;
-            transform.position = mainCamera.ScreenToWorldPoint(mousePos);
+            Ray ray = puzzleCamera.ScreenPointToRay(Input.mousePosition);
+            Plane dragPlane = new Plane(Vector3.up, new Vector3(0, dragHeight, 0));
+
+            if (dragPlane.Raycast(ray, out float enter))
+            {
+                Vector3 worldPoint = ray.GetPoint(enter);
+
+                transform.position = new Vector3(
+                    worldPoint.x,
+                    dragHeight,
+                    worldPoint.z
+                );
+            }
         }
 
-        // Remove from slot with Space key — only for selected pipe
-        if (isSelected && isPlaced && Input.GetKeyDown(KeyCode.Space))
+        // Select pipe
+        
+
+        // Remove from slot with Space
+        if (Input.GetKeyDown(KeyCode.Space) && isSelected && currentSlot != null)
         {
             RemoveFromSlot();
-        }
 
-        // Deselect when clicking elsewhere
-        if (Input.GetMouseButtonDown(0))
-        {
-            Ray ray = mainCamera.ScreenPointToRay(Input.mousePosition);
-            RaycastHit hit;
+            isPlaced = false;
+            isDragging = true;
 
-            if (Physics.Raycast(ray, out hit))
-            {
-                if (hit.transform != transform)
-                {
-                    isSelected = false;
-                }
-            }
-            else
-            {
-                isSelected = false;
-            }
+            // Lift slightly above slot
+            transform.position += Vector3.up * 0.2f;
+            dragHeight = transform.position.y;
         }
     }
 
-    bool TryPlacePipe(Vector3 position)
+    bool TryPlacePipe()
     {
-        Collider[] hits = Physics.OverlapSphere(position, 0.5f);
+        Collider[] hits = Physics.OverlapSphere(transform.position, 0.3f);
+
+        Slot closestSlot = null;
+        float closestDistance = Mathf.Infinity;
 
         foreach (Collider hit in hits)
         {
@@ -119,26 +123,36 @@ public class PipeDrag : MonoBehaviour
 
             if (slot != null && !slot.occupied)
             {
-                transform.position = slot.transform.position;
+                float distance = Vector3.Distance(
+                    transform.position,
+                    slot.transform.position
+                );
 
-                slot.occupied = true;
-                currentSlot = slot;
-                isPlaced = true;
-
-                PlaySound(placeSound); // Play place sound
-
-                Debug.Log("Pipe Placed");
-
-                if (puzzleManager != null)
+                if (distance < closestDistance)
                 {
-                    puzzleManager.CheckPuzzleSolved();
+                    closestDistance = distance;
+                    closestSlot = slot;
                 }
-
-                return true; // Successfully placed
             }
         }
 
-        return false; // Not placed
+        if (closestSlot != null)
+        {
+            transform.position = closestSlot.transform.position;
+
+            closestSlot.occupied = true;
+            currentSlot = closestSlot;
+            isPlaced = true;
+            isSelected = true;
+
+            PlaySound(placeSound);
+            Debug.Log("Pipe placed in closest slot");
+
+            puzzleManager?.CheckPuzzleSolved();
+            return true;
+        }
+
+        return false;
     }
 
     void RemoveFromSlot()
@@ -146,16 +160,18 @@ public class PipeDrag : MonoBehaviour
         if (currentSlot != null)
         {
             currentSlot.occupied = false;
+
+            Debug.Log("Pipe removed from: " + currentSlot.name);
+
+            currentSlot = null;
+
+            PlaySound(removeSound);
         }
+    }
 
-        currentSlot = null;
-        isPlaced = false;
-
-        distance = mainCamera.WorldToScreenPoint(transform.position).z;
-        dragging = true;
-
-        PlaySound(removeSound); // Play remove sound
-
-        Debug.Log("Pipe Removed");
+    private void OnDrawGizmos()
+    {
+        Gizmos.color = Color.yellow;
+        Gizmos.DrawWireSphere(transform.position, 0.3f);
     }
 }
