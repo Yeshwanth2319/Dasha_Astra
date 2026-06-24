@@ -59,7 +59,14 @@ public class PuzzleTrigger : MonoBehaviour
         if (playerInside && !puzzleOpen && Input.GetKeyDown(KeyCode.E))
             OpenPuzzle();
 
-        Ray ray = puzzleCamera.ScreenPointToRay(Input.mousePosition);
+        // Close puzzle with ESC
+        if (puzzleOpen && Input.GetKeyDown(KeyCode.Escape))
+        {
+            ClosePuzzle();
+        }
+
+    
+    Ray ray = puzzleCamera.ScreenPointToRay(Input.mousePosition);
 
         if (Physics.Raycast(ray, out RaycastHit hit, Mathf.Infinity, pipeLayerMask))
         {
@@ -107,13 +114,19 @@ public class PuzzleTrigger : MonoBehaviour
         Cursor.lockState = CursorLockMode.None;
         Cursor.visible = true;
     }
-
-    void ClosePuzzle()
+    public void BackButton()
+    {
+        ClosePuzzle();
+    }
+    public void ClosePuzzle()
     {
         puzzleOpen = false;
 
         if (playerMovement != null) playerMovement.enabled = true;
         if (thirdPersonCamera != null) thirdPersonCamera.enabled = true;
+
+        // Close puzzle with ESC
+       
 
         playerCamera.enabled = true;
         puzzleCamera.enabled = false;

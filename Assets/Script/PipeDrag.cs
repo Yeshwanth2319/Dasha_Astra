@@ -94,7 +94,7 @@ public class PipeDrag : MonoBehaviour
         }
 
         // Select pipe
-        
+
 
         // Remove from slot with Space
         if (Input.GetKeyDown(KeyCode.Space) && isSelected && currentSlot != null)
@@ -169,9 +169,5 @@ public class PipeDrag : MonoBehaviour
         }
     }
 
-    private void OnDrawGizmos()
-    {
-        Gizmos.color = Color.yellow;
-        Gizmos.DrawWireSphere(transform.position, 0.3f);
-    }
+
 }

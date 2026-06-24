@@ -14,21 +14,7 @@ public class MainMenu : MonoBehaviour
 
     void Update()
     {
-        if (Input.GetKeyDown(KeyCode.Escape))
-        {
-            if (settingsPanel != null && settingsPanel.activeSelf)
-            {
-                CloseSettings();
-            }
-            else if (controlsPanel != null && controlsPanel.activeSelf)
-            {
-                CloseControls();
-            }
-            else
-            {
-                QuitGame();
-            }
-        }
+      
     }
 
     public void StartGame()
